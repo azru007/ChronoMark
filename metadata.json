@@ -1,0 +1,8 @@
+{
+  "name": "ChronoMark: Focus & Activity Timeline",
+  "description": "Tactile timeline tracker and focus companion with instant sensory feedback, visual time-block annotations, offline PWA, and real-time cloud sync.",
+  "requestFramePermissions": [],
+  "majorCapabilities": [
+    "MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"
+  ]
+}

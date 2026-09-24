@@ -1,0 +1,19 @@
+{
+  "name": "ChronoMark Timeline",
+  "short_name": "ChronoMark",
+  "description": "Tactile timeline tracker and focus companion with instant sensory feedback and real-time cloud sync.",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#090d16",
+  "theme_color": "#090d16",
+  "orientation": "portrait-primary",
+  "icons": [
+    {
+      "src": "/icon.svg",
+      "sizes": "192x192 512x512",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    }
+  ],
+  "categories": ["productivity", "utilities", "lifestyle"]
+}
