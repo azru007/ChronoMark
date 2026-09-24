@@ -10,7 +10,10 @@ import {
   ChevronUp,
   ChevronDown,
   RotateCcw,
-  Sliders
+  Sliders,
+  Split,
+  PlusCircle,
+  X
 } from 'lucide-react';
 import type { TimelineEvent, TimelineSpan, EventCategory } from '../types';
 import { CATEGORIES } from '../utils/categories';
@@ -115,6 +118,7 @@ interface TimelineViewProps {
   onUpdateEventTime?: (eventId: string, newTimestamp: number) => void;
   onDeleteEvent: (eventId: string) => void;
   onSaveSpanAnnotation: (spanKey: string, text: string, category: EventCategory) => void;
+  onSplitTimeline?: (startEventId: string, endEventId: string, splitTimestamp: number, note?: string) => void;
   timeFormat24h: boolean;
   onSeedDemoData?: () => void;
 }
@@ -127,6 +131,7 @@ export const TimelineView: React.FC<TimelineViewProps> = ({
   onUpdateEventTime,
   onDeleteEvent,
   onSaveSpanAnnotation,
+  onSplitTimeline,
   timeFormat24h,
   onSeedDemoData
 }) => {
@@ -136,6 +141,11 @@ export const TimelineView: React.FC<TimelineViewProps> = ({
   
   // Time adjuster popup/tray state
   const [adjustingTimeEventId, setAdjustingTimeEventId] = useState<string | null>(null);
+
+  // Split Timeline custom modal/drawer state
+  const [splittingSpanId, setSplittingSpanId] = useState<string | null>(null);
+  const [splitCustomTime, setSplitCustomTime] = useState<string>('');
+  const [splitNote, setSplitNote] = useState<string>('');
 
   // Local draft states for span annotations to ensure smooth typing
   const [spanDrafts, setSpanDrafts] = useState<Record<string, string>>({});
@@ -181,6 +191,46 @@ export const TimelineView: React.FC<TimelineViewProps> = ({
     onUpdateEventTime(evt.id, dateObj.getTime());
   };
 
+  // Quick split exactly at the midpoint of a span
+  const handleQuickMidpointSplit = (span: TimelineSpan) => {
+    if (!onSplitTimeline || !span.endEventId) return;
+    const midpointTime = Math.round((span.startTime + span.endTime) / 2);
+    onSplitTimeline(span.startEventId, span.endEventId, midpointTime, 'Split Checkpoint');
+  };
+
+  // Open custom split dialog
+  const handleOpenCustomSplit = (span: TimelineSpan) => {
+    setSplittingSpanId(span.id);
+    const midDate = new Date(Math.round((span.startTime + span.endTime) / 2));
+    const hh = String(midDate.getHours()).padStart(2, '0');
+    const mm = String(midDate.getMinutes()).padStart(2, '0');
+    setSplitCustomTime(`${hh}:${mm}`);
+    setSplitNote('');
+  };
+
+  // Confirm custom split
+  const handleConfirmCustomSplit = (span: TimelineSpan) => {
+    if (!onSplitTimeline || !span.endEventId) return;
+    
+    // Parse HH:mm on span date
+    const [hStr, mStr] = splitCustomTime.split(':');
+    const targetH = parseInt(hStr, 10);
+    const targetM = parseInt(mStr, 10);
+
+    const baseDate = new Date(span.startTime);
+    baseDate.setHours(targetH, targetM, 0, 0);
+    let splitTime = baseDate.getTime();
+
+    // Boundary validation: ensure it falls strictly between startTime and endTime
+    if (splitTime <= span.startTime || splitTime >= span.endTime) {
+      splitTime = Math.round((span.startTime + span.endTime) / 2);
+    }
+
+    onSplitTimeline(span.startEventId, span.endEventId, splitTime, splitNote.trim() || 'Split Checkpoint');
+    setSplittingSpanId(null);
+    setSplitNote('');
+  };
+
   if (events.length === 0) {
     return (
       <div className="w-full max-w-2xl mx-auto px-4 py-12 text-center">
@@ -197,7 +247,7 @@ export const TimelineView: React.FC<TimelineViewProps> = ({
           No Timeline Events Recorded
         </h3>
         <p className="text-sm text-slate-500 dark:text-slate-400 max-w-md mx-auto mb-6 leading-relaxed">
-          Tap the big glowing button below to anchor your first time marker. Each tap captures the exact moment and creates an annotatable focus block.
+          Tap and hold the big glowing button below to anchor your first time marker. Each marker captures the exact moment and forms connected, annotatable focus spans.
         </p>
 
         {onSeedDemoData && (
@@ -331,7 +381,7 @@ export const TimelineView: React.FC<TimelineViewProps> = ({
                         <button
                           type="button"
                           onClick={() => setAdjustingTimeEventId(isAdjustingTime ? null : evt.id)}
-                          title="Adjust time (scroll or +/- controls)"
+                          title="Adjust time (stepper controls)"
                           className="ml-1 p-0.5 rounded text-amber-600 dark:text-amber-300 hover:bg-amber-500/20 transition cursor-pointer"
                         >
                           <Sliders className="w-3 h-3" />
@@ -496,7 +546,7 @@ export const TimelineView: React.FC<TimelineViewProps> = ({
                 </div>
               </div>
 
-              {/* Between Event Markers: Graphical Connecting Line + Rich Annotation Block */}
+              {/* Between Event Markers: Graphical Connecting Line + Rich Annotation Block + Split Button */}
               {associatedSpan && (
                 <div className="relative pl-4 sm:pl-7 my-3">
                   {/* Left decorative connector line */}
@@ -507,6 +557,20 @@ export const TimelineView: React.FC<TimelineViewProps> = ({
                       : 'bg-gradient-to-b from-amber-500/60 to-indigo-500/60'
                     }
                   `} />
+
+                  {/* Interactive Split Node placed on the central vertical flow */}
+                  {onSplitTimeline && associatedSpan.endEventId && (
+                    <div className="absolute left-[3px] sm:left-[11px] top-1/2 -translate-y-1/2 z-20 group/split">
+                      <button
+                        type="button"
+                        onClick={() => handleQuickMidpointSplit(associatedSpan)}
+                        title="Split this span into two at the exact midpoint"
+                        className="w-5 h-5 sm:w-6 sm:h-6 rounded-full bg-white dark:bg-slate-900 border-2 border-indigo-400 dark:border-indigo-500 hover:border-amber-400 text-indigo-500 dark:text-indigo-400 hover:text-amber-500 flex items-center justify-center shadow-md hover:scale-125 transition-all duration-200 cursor-pointer"
+                      >
+                        <Split className="w-2.5 h-2.5 sm:w-3 sm:h-3 stroke-[2.5]" />
+                      </button>
+                    </div>
+                  )}
 
                   {/* The Annotation Container */}
                   <div className={`
@@ -529,12 +593,34 @@ export const TimelineView: React.FC<TimelineViewProps> = ({
                           {associatedSpan.isOngoing ? 'Active Now' : formatTimeShort(associatedSpan.endTime, timeFormat24h)}
                         </span>
 
-                        {associatedSpan.isOngoing && (
+                        {associatedSpan.isOngoing ? (
                           <span className="flex items-center gap-1 text-[10px] font-semibold text-emerald-600 dark:text-emerald-400 bg-emerald-500/10 px-2 py-0.5 rounded-full border border-emerald-500/20 animate-pulse">
                             <Flame className="w-3 h-3 text-emerald-500 dark:text-emerald-400" />
                             Ongoing Sprint
                           </span>
-                        )}
+                        ) : onSplitTimeline && associatedSpan.endEventId ? (
+                          /* Split Timeline Feature Action Buttons */
+                          <div className="flex items-center gap-1">
+                            <button
+                              type="button"
+                              onClick={() => handleQuickMidpointSplit(associatedSpan)}
+                              title="Split this span evenly at the exact midpoint"
+                              className="inline-flex items-center gap-1 px-2 py-0.5 rounded-lg bg-indigo-500/10 hover:bg-indigo-500/20 text-indigo-600 dark:text-indigo-400 border border-indigo-500/20 text-[11px] font-medium transition cursor-pointer"
+                            >
+                              <Split className="w-3 h-3" />
+                              <span>Split Span</span>
+                            </button>
+
+                            <button
+                              type="button"
+                              onClick={() => handleOpenCustomSplit(associatedSpan)}
+                              title="Set custom timestamp to split this span"
+                              className="px-1.5 py-0.5 rounded-lg text-slate-400 hover:text-indigo-600 dark:hover:text-indigo-300 hover:bg-slate-100 dark:hover:bg-slate-800 text-[11px] transition cursor-pointer"
+                            >
+                              Custom Time
+                            </button>
+                          </div>
+                        ) : null}
                       </div>
 
                       {/* Category Selection Chips */}
@@ -560,6 +646,57 @@ export const TimelineView: React.FC<TimelineViewProps> = ({
                         })}
                       </div>
                     </div>
+
+                    {/* Custom Split Timeline Expansion Drawer */}
+                    {splittingSpanId === associatedSpan.id && (
+                      <div className="mb-3 p-3 rounded-xl bg-indigo-50/80 dark:bg-indigo-950/40 border border-indigo-200 dark:border-indigo-800/60 animate-in fade-in zoom-in-95 duration-150">
+                        <div className="flex items-center justify-between mb-2">
+                          <span className="text-xs font-bold text-indigo-900 dark:text-indigo-200 flex items-center gap-1.5">
+                            <Split className="w-3.5 h-3.5 text-indigo-500" />
+                            Insert New Mark Between Checkpoints
+                          </span>
+                          <button
+                            type="button"
+                            onClick={() => setSplittingSpanId(null)}
+                            className="p-1 rounded text-slate-400 hover:text-slate-600 dark:hover:text-slate-200"
+                          >
+                            <X className="w-3.5 h-3.5" />
+                          </button>
+                        </div>
+
+                        <p className="text-[11px] text-slate-600 dark:text-slate-400 mb-2">
+                          Create an intermediate checkpoint between {formatTimeShort(associatedSpan.startTime, timeFormat24h)} and {formatTimeShort(associatedSpan.endTime, timeFormat24h)}.
+                        </p>
+
+                        <div className="flex flex-wrap items-center gap-2">
+                          <div className="flex items-center gap-1.5 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-lg px-2.5 py-1 text-xs">
+                            <Clock className="w-3.5 h-3.5 text-indigo-500" />
+                            <input
+                              type="time"
+                              value={splitCustomTime}
+                              onChange={(e) => setSplitCustomTime(e.target.value)}
+                              className="bg-transparent text-slate-900 dark:text-white font-mono font-bold focus:outline-none"
+                            />
+                          </div>
+
+                          <input
+                            type="text"
+                            value={splitNote}
+                            onChange={(e) => setSplitNote(e.target.value)}
+                            placeholder="Optional note (e.g. Switched to code review)..."
+                            className="flex-1 min-w-[140px] bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-lg px-2.5 py-1 text-xs text-slate-900 dark:text-white placeholder-slate-400 focus:outline-none focus:border-indigo-500"
+                          />
+
+                          <button
+                            type="button"
+                            onClick={() => handleConfirmCustomSplit(associatedSpan)}
+                            className="px-3 py-1 rounded-lg bg-indigo-600 hover:bg-indigo-500 text-white font-semibold text-xs transition cursor-pointer shadow-xs"
+                          >
+                            Add Split Mark
+                          </button>
+                        </div>
+                      </div>
+                    )}
 
                     {/* Direct In-Line Activity Annotation Text Field */}
                     <div className="relative">

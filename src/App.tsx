@@ -18,6 +18,7 @@ import {
   formatTime, 
   buildTimelineSpans 
 } from './utils/date';
+import { playSensorySound, triggerHaptic } from './utils/sensory';
 import { 
   auth, 
   onAuthStateChanged, 
@@ -257,6 +258,54 @@ export default function App() {
     await removeEvent(eventId, user);
   };
 
+  // Split Timeline: insert a new mark between two existing timemarks
+  const handleSplitTimeline = async (
+    startEventId: string, 
+    endEventId: string, 
+    splitTimestamp: number, 
+    note?: string
+  ) => {
+    const startEvt = events.find((e) => e.id === startEventId);
+    if (!startEvt) return;
+
+    const dateObj = new Date(splitTimestamp);
+    const newEvent: TimelineEvent = {
+      id: `evt_${splitTimestamp}_${Math.random().toString(36).substring(2, 7)}`,
+      timestamp: splitTimestamp,
+      isoDate: startEvt.isoDate,
+      timeString: dateObj.toLocaleTimeString([], {
+        hour: '2-digit',
+        minute: '2-digit',
+        second: '2-digit',
+        hour12: !settings.timeFormat24h
+      }),
+      note: note || '',
+      category: 'deep_work',
+      createdAt: Date.now(),
+      updatedAt: Date.now()
+    };
+
+    setEvents((prev) => {
+      const next = [...prev, newEvent];
+      return next.sort((a, b) => a.timestamp - b.timestamp);
+    });
+
+    setAllEvents((prev) => {
+      const next = [...prev, newEvent];
+      return next.sort((a, b) => a.timestamp - b.timestamp);
+    });
+
+    // Provide pleasant feedback if enabled
+    if (settings.hapticEnabled) {
+      triggerHaptic([30, 40]);
+    }
+    if (settings.soundEnabled) {
+      playSensorySound(settings.soundTheme, 0.8);
+    }
+
+    await persistEvent(newEvent, user);
+  };
+
   // Save span annotation (text entered on the graphical line between markers)
   const handleSaveSpanAnnotation = useCallback(async (
     spanKey: string, 
@@ -370,6 +419,7 @@ export default function App() {
             onUpdateEventTime={handleUpdateEventTime}
             onDeleteEvent={handleDeleteEvent}
             onSaveSpanAnnotation={handleSaveSpanAnnotation}
+            onSplitTimeline={handleSplitTimeline}
             timeFormat24h={settings.timeFormat24h}
             onSeedDemoData={handleSeedDemoData}
           />
