@@ -49,30 +49,30 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
   ];
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 bg-black/80 backdrop-blur-sm animate-fade-in">
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 bg-black/75 backdrop-blur-sm animate-fade-in">
       <div 
-        className="relative w-full max-w-md bg-slate-900 border border-slate-800 rounded-3xl p-5 sm:p-6 shadow-2xl overflow-hidden flex flex-col max-h-[90vh]"
+        className="relative w-full max-w-md bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-3xl p-5 sm:p-6 shadow-2xl overflow-hidden flex flex-col max-h-[90vh] transition-colors"
         onClick={(e) => e.stopPropagation()}
       >
         {/* Header */}
-        <div className="flex items-center justify-between pb-4 border-b border-slate-800">
+        <div className="flex items-center justify-between pb-4 border-b border-slate-200 dark:border-slate-800">
           <div className="flex items-center gap-2.5">
-            <div className="p-2 rounded-xl bg-slate-800 text-slate-300 border border-slate-700">
-              <SettingsIcon className="w-5 h-5" />
+            <div className="p-2 rounded-xl bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 border border-slate-200 dark:border-slate-700">
+              <SettingsIcon className="w-5 h-5 text-amber-500" />
             </div>
             <div>
-              <h2 className="text-base sm:text-lg font-bold text-white">
-                Sensory & Preferences
+              <h2 className="text-base sm:text-lg font-bold text-slate-900 dark:text-white">
+                Preferences
               </h2>
-              <p className="text-xs text-slate-400">
-                Audio haptics, theme, and display preferences
+              <p className="text-xs text-slate-500 dark:text-slate-400">
+                Sensory feedback, themes, & display
               </p>
             </div>
           </div>
           <button
             type="button"
             onClick={onClose}
-            className="p-1.5 rounded-xl text-slate-400 hover:text-white hover:bg-slate-800 transition cursor-pointer"
+            className="p-1.5 rounded-xl text-slate-400 hover:text-slate-900 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-slate-800 transition cursor-pointer"
           >
             <X className="w-5 h-5" />
           </button>
@@ -80,95 +80,92 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
 
         {/* Options List */}
         <div className="overflow-y-auto flex-1 py-4 space-y-4">
-          {/* Theme Mode */}
-          <div className="flex items-center justify-between p-3.5 rounded-2xl bg-slate-950/60 border border-slate-800">
+          {/* Theme Mode Switch */}
+          <div className="flex items-center justify-between p-3.5 rounded-2xl bg-slate-50 dark:bg-slate-950/60 border border-slate-200 dark:border-slate-800">
             <div className="flex items-center gap-2.5">
               {settings.darkMode ? (
-                <Moon className="w-4 h-4 text-indigo-400" />
+                <Moon className="w-4 h-4 text-indigo-500 dark:text-indigo-400" />
               ) : (
-                <Sun className="w-4 h-4 text-amber-400" />
+                <Sun className="w-4 h-4 text-amber-500" />
               )}
               <div>
-                <p className="text-xs font-semibold text-white">Dark Mode</p>
-                <p className="text-[11px] text-slate-400">Nighttime focus palette</p>
+                <p className="text-xs font-semibold text-slate-900 dark:text-white">Dark Mode</p>
+                <p className="text-[11px] text-slate-500 dark:text-slate-400">
+                  {settings.darkMode ? 'Nighttime focus palette' : 'Crisp daylight aesthetic'}
+                </p>
               </div>
             </div>
             <button
               type="button"
               onClick={() => onUpdateSettings({ darkMode: !settings.darkMode })}
+              aria-label="Toggle dark mode"
               className={`w-12 h-6 flex items-center rounded-full p-1 cursor-pointer transition-colors ${
-                settings.darkMode ? 'bg-amber-500 justify-end' : 'bg-slate-700 justify-start'
+                settings.darkMode ? 'bg-amber-500 justify-end' : 'bg-slate-300 dark:bg-slate-700 justify-start'
               }`}
             >
-              <div className="w-4 h-4 rounded-full bg-slate-950 shadow-md" />
+              <div className="w-4 h-4 rounded-full bg-white dark:bg-slate-950 shadow-md" />
             </button>
           </div>
 
           {/* Sound Feedback Toggle */}
-          <div className="p-3.5 rounded-2xl bg-slate-950/60 border border-slate-800 space-y-3">
+          <div className="p-3.5 rounded-2xl bg-slate-50 dark:bg-slate-950/60 border border-slate-200 dark:border-slate-800 space-y-3">
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-2.5">
                 {settings.soundEnabled ? (
-                  <Volume2 className="w-4 h-4 text-amber-400" />
+                  <Volume2 className="w-4 h-4 text-amber-500 dark:text-amber-400" />
                 ) : (
-                  <VolumeX className="w-4 h-4 text-slate-500" />
+                  <VolumeX className="w-4 h-4 text-slate-400" />
                 )}
                 <div>
-                  <p className="text-xs font-semibold text-white">Acoustic Feedback</p>
-                  <p className="text-[11px] text-slate-400">Offline synthesized audio triggers</p>
+                  <p className="text-xs font-semibold text-slate-900 dark:text-white">Sound Effects</p>
+                  <p className="text-[11px] text-slate-500 dark:text-slate-400">Synthesized Web Audio response on tap</p>
                 </div>
               </div>
               <button
                 type="button"
-                onClick={() => {
-                  const nextVal = !settings.soundEnabled;
-                  onUpdateSettings({ soundEnabled: nextVal });
-                  if (nextVal) handleTestSound(settings.soundTheme);
-                }}
+                onClick={() => onUpdateSettings({ soundEnabled: !settings.soundEnabled })}
                 className={`w-12 h-6 flex items-center rounded-full p-1 cursor-pointer transition-colors ${
-                  settings.soundEnabled ? 'bg-amber-500 justify-end' : 'bg-slate-700 justify-start'
+                  settings.soundEnabled ? 'bg-amber-500 justify-end' : 'bg-slate-300 dark:bg-slate-700 justify-start'
                 }`}
               >
-                <div className="w-4 h-4 rounded-full bg-slate-950 shadow-md" />
+                <div className="w-4 h-4 rounded-full bg-white dark:bg-slate-950 shadow-md" />
               </button>
             </div>
 
+            {/* Sound Themes Grid */}
             {settings.soundEnabled && (
-              <div className="pt-2 border-t border-slate-800/80 space-y-1.5">
-                <span className="text-[10px] uppercase font-bold text-slate-400 tracking-wider">
-                  Sound Tone
-                </span>
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-1.5">
-                  {soundOptions.map((opt) => (
-                    <button
-                      key={opt.id}
-                      type="button"
-                      onClick={() => {
-                        onUpdateSettings({ soundTheme: opt.id });
-                        handleTestSound(opt.id);
-                      }}
-                      className={`p-2 rounded-xl text-left border transition cursor-pointer ${
-                        settings.soundTheme === opt.id
-                          ? 'bg-amber-500/10 border-amber-500/50 text-amber-300'
-                          : 'bg-slate-900 border-slate-800 text-slate-300 hover:border-slate-700'
-                      }`}
-                    >
-                      <p className="text-xs font-semibold">{opt.label}</p>
-                      <p className="text-[10px] text-slate-400 truncate">{opt.desc}</p>
-                    </button>
-                  ))}
-                </div>
+              <div className="grid grid-cols-2 gap-2 pt-2 border-t border-slate-200 dark:border-slate-800/80">
+                {soundOptions.map((opt) => (
+                  <button
+                    key={opt.id}
+                    type="button"
+                    onClick={() => {
+                      onUpdateSettings({ soundTheme: opt.id });
+                      handleTestSound(opt.id);
+                    }}
+                    className={`p-2 rounded-xl text-left border text-xs transition cursor-pointer ${
+                      settings.soundTheme === opt.id
+                        ? 'bg-amber-500/15 border-amber-500/40 text-amber-700 dark:text-amber-300 font-semibold'
+                        : 'bg-white dark:bg-slate-900/80 border-slate-200 dark:border-slate-800 text-slate-600 dark:text-slate-400 hover:border-slate-300 dark:hover:border-slate-700'
+                    }`}
+                  >
+                    <div className="flex items-center justify-between">
+                      <span>{opt.label}</span>
+                      {settings.soundTheme === opt.id && <Sparkles className="w-3 h-3 text-amber-500" />}
+                    </div>
+                  </button>
+                ))}
               </div>
             )}
           </div>
 
-          {/* Haptic Vibration */}
-          <div className="flex items-center justify-between p-3.5 rounded-2xl bg-slate-950/60 border border-slate-800">
+          {/* Haptic Feedback */}
+          <div className="flex items-center justify-between p-3.5 rounded-2xl bg-slate-50 dark:bg-slate-950/60 border border-slate-200 dark:border-slate-800">
             <div className="flex items-center gap-2.5">
-              <Vibrate className="w-4 h-4 text-emerald-400" />
+              <Vibrate className="w-4 h-4 text-emerald-500 dark:text-emerald-400" />
               <div>
-                <p className="text-xs font-semibold text-white">Haptic Vibration</p>
-                <p className="text-[11px] text-slate-400">Tactile motor impulses on touch</p>
+                <p className="text-xs font-semibold text-slate-900 dark:text-white">Haptic Vibration</p>
+                <p className="text-[11px] text-slate-500 dark:text-slate-400">Tactile motor impulses on touch</p>
               </div>
             </div>
             <button
@@ -179,30 +176,30 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
                 if (nextVal) triggerHaptic([30, 40]);
               }}
               className={`w-12 h-6 flex items-center rounded-full p-1 cursor-pointer transition-colors ${
-                settings.hapticEnabled ? 'bg-emerald-500 justify-end' : 'bg-slate-700 justify-start'
+                settings.hapticEnabled ? 'bg-emerald-500 justify-end' : 'bg-slate-300 dark:bg-slate-700 justify-start'
               }`}
             >
-              <div className="w-4 h-4 rounded-full bg-slate-950 shadow-md" />
+              <div className="w-4 h-4 rounded-full bg-white dark:bg-slate-950 shadow-md" />
             </button>
           </div>
 
           {/* 24-hour clock display */}
-          <div className="flex items-center justify-between p-3.5 rounded-2xl bg-slate-950/60 border border-slate-800">
+          <div className="flex items-center justify-between p-3.5 rounded-2xl bg-slate-50 dark:bg-slate-950/60 border border-slate-200 dark:border-slate-800">
             <div className="flex items-center gap-2.5">
-              <Clock className="w-4 h-4 text-sky-400" />
+              <Clock className="w-4 h-4 text-sky-500 dark:text-sky-400" />
               <div>
-                <p className="text-xs font-semibold text-white">24-Hour Time Format</p>
-                <p className="text-[11px] text-slate-400">e.g. 14:30 vs 02:30 PM</p>
+                <p className="text-xs font-semibold text-slate-900 dark:text-white">24-Hour Time Format</p>
+                <p className="text-[11px] text-slate-500 dark:text-slate-400">e.g. 14:30 vs 02:30 PM</p>
               </div>
             </div>
             <button
               type="button"
               onClick={() => onUpdateSettings({ timeFormat24h: !settings.timeFormat24h })}
               className={`w-12 h-6 flex items-center rounded-full p-1 cursor-pointer transition-colors ${
-                settings.timeFormat24h ? 'bg-sky-500 justify-end' : 'bg-slate-700 justify-start'
+                settings.timeFormat24h ? 'bg-sky-500 justify-end' : 'bg-slate-300 dark:bg-slate-700 justify-start'
               }`}
             >
-              <div className="w-4 h-4 rounded-full bg-slate-950 shadow-md" />
+              <div className="w-4 h-4 rounded-full bg-white dark:bg-slate-950 shadow-md" />
             </button>
           </div>
 
@@ -210,10 +207,10 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
           {canInstallPwa && onInstallPwa && (
             <div className="p-3.5 rounded-2xl bg-gradient-to-r from-amber-500/10 to-indigo-500/10 border border-amber-500/30 flex items-center justify-between gap-3">
               <div className="flex items-center gap-2.5">
-                <Smartphone className="w-5 h-5 text-amber-400" />
+                <Smartphone className="w-5 h-5 text-amber-500" />
                 <div>
-                  <p className="text-xs font-bold text-white">Install App (PWA)</p>
-                  <p className="text-[11px] text-slate-300">Run as native offline desktop/mobile app</p>
+                  <p className="text-xs font-bold text-slate-900 dark:text-white">Install App (PWA)</p>
+                  <p className="text-[11px] text-slate-500 dark:text-slate-300">Run as native offline desktop/mobile app</p>
                 </div>
               </div>
               <button

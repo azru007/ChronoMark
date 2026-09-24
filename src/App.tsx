@@ -205,6 +205,35 @@ export default function App() {
     await persistEvent(newEvent, user);
   }, [selectedDate, settings.timeFormat24h, user]);
 
+  // Update Event timestamp (hour/minute scroll/stepper adjustment)
+  const handleUpdateEventTime = async (eventId: string, newTimestamp: number) => {
+    const target = events.find((e) => e.id === eventId);
+    if (!target) return;
+
+    const dateObj = new Date(newTimestamp);
+    const updated: TimelineEvent = {
+      ...target,
+      timestamp: newTimestamp,
+      timeString: dateObj.toLocaleTimeString([], {
+        hour: '2-digit',
+        minute: '2-digit',
+        second: '2-digit',
+        hour12: !settings.timeFormat24h
+      }),
+      updatedAt: Date.now()
+    };
+
+    setEvents((prev) => {
+      const next = prev.map((e) => (e.id === eventId ? updated : e));
+      return next.sort((a, b) => a.timestamp - b.timestamp);
+    });
+    setAllEvents((prev) => {
+      const next = prev.map((e) => (e.id === eventId ? updated : e));
+      return next.sort((a, b) => a.timestamp - b.timestamp);
+    });
+    await persistEvent(updated, user);
+  };
+
   // Update Event note
   const handleUpdateEventNote = async (eventId: string, note: string) => {
     const target = events.find((e) => e.id === eventId);
@@ -307,7 +336,7 @@ export default function App() {
   };
 
   return (
-    <div className="min-h-screen flex flex-col bg-slate-950 text-slate-100 selection:bg-amber-500/30 selection:text-amber-200">
+    <div className="min-h-screen flex flex-col bg-slate-50 dark:bg-slate-950 text-slate-900 dark:text-slate-100 transition-colors duration-200 selection:bg-amber-500/30 selection:text-amber-600 dark:selection:text-amber-200">
       {/* Top Header */}
       <Header
         selectedDate={selectedDate}
@@ -324,6 +353,8 @@ export default function App() {
         hasUnsyncedChanges={false}
         canInstallPwa={canInstallPwa}
         onInstallPwa={handleInstallPwa}
+        darkMode={settings.darkMode}
+        onToggleDarkMode={() => setSettings((prev) => ({ ...prev, darkMode: !prev.darkMode }))}
       />
 
       {/* Main Content Area */}
@@ -336,6 +367,7 @@ export default function App() {
             spans={timelineSpans}
             isToday={isToday}
             onUpdateEventNote={handleUpdateEventNote}
+            onUpdateEventTime={handleUpdateEventTime}
             onDeleteEvent={handleDeleteEvent}
             onSaveSpanAnnotation={handleSaveSpanAnnotation}
             timeFormat24h={settings.timeFormat24h}
@@ -345,7 +377,7 @@ export default function App() {
 
         {/* Bottom Hero Action: Big Tactile Mark Button */}
         {isToday ? (
-          <section className="sticky bottom-0 w-full pt-2 pb-6 bg-gradient-to-t from-slate-950 via-slate-950/95 to-transparent backdrop-blur-xs">
+          <section className="sticky bottom-0 w-full pt-2 pb-6 bg-gradient-to-t from-slate-50 via-slate-50/95 dark:from-slate-950 dark:via-slate-950/95 to-transparent backdrop-blur-xs transition-colors">
             <BigMarkButton
               onMarkTime={handleMarkTime}
               lastEventTimestamp={latestEventTimestamp}
@@ -357,12 +389,12 @@ export default function App() {
           </section>
         ) : (
           <section className="py-6 text-center">
-            <div className="inline-flex items-center gap-3 px-5 py-2.5 rounded-2xl bg-slate-900 border border-slate-800 text-xs text-slate-300">
+            <div className="inline-flex items-center gap-3 px-5 py-2.5 rounded-2xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 text-xs text-slate-700 dark:text-slate-300 shadow-sm">
               <span>Viewing historical logs for {selectedDate}</span>
               <button
                 type="button"
                 onClick={handleToday}
-                className="font-bold text-amber-400 hover:text-amber-300 underline cursor-pointer"
+                className="font-bold text-amber-600 dark:text-amber-400 hover:text-amber-500 underline cursor-pointer"
               >
                 Return to Today to Mark Time
               </button>
